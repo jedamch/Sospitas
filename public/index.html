@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SOSPITAS — Hospital Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #f5f4f2;
+      --surface: #ffffff;
+      --surface2: #f0efed;
+      --border: #e0deda;
+      --border2: #ccc9c3;
+      --text: #1a1917;
+      --muted: #8a8680;
+      --faint: #b5b1ab;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: 220px;
+      background: var(--text);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      padding: 32px 0;
+    }
+    .logo { padding: 0 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .logo h1 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 4px; color: #fff; text-transform: uppercase; }
+    .logo p { font-family: 'DM Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 5px; letter-spacing: 1.5px; }
+
+    nav { padding: 20px 0; flex: 1; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 24px; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.15s; letter-spacing: 0.3px; }
+    .nav-item:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); }
+    .nav-item.active { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-icon { font-size: 14px; width: 18px; text-align: center; opacity: 0.7; }
+
+    .sidebar-footer { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.08); font-family: 'DM Mono', monospace; font-size: 9px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+    .status-dot { display: inline-block; width: 6px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; margin-right: 6px; animation: pulse 2.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .main { margin-left: 220px; padding: 36px 40px; }
+
+    .topbar { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 36px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .page-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--text); }
+    .page-subtitle { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+    .time-display { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); text-align: right; }
+    .time-date { font-size: 10px; color: var(--faint); margin-top: 3px; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-bottom: 32px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .stat-card { background: var(--surface); padding: 22px 24px; transition: background 0.15s; }
+    .stat-card:hover { background: var(--surface2); }
+    .stat-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--faint); text-transform: uppercase; margin-bottom: 10px; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800; color: var(--text); line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .panel.full { grid-column: 1 / -1; }
+
+    .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+    .panel-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .panel-action { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text); cursor: pointer; background: var(--surface); border: 1px solid var(--border2); padding: 5px 12px; border-radius: 4px; transition: all 0.15s; letter-spacing: 1px; }
+    .panel-action:hover { background: var(--text); color: #fff; border-color: var(--text); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--surface2); }
+    th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); padding: 10px 20px; text-align: left; font-weight: 500; }
+    td { padding: 13px 20px; font-size: 13px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .badge { display: inline-block; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; border: 1px solid var(--border2); background: var(--surface2); color: var(--muted); }
+    .badge-high { background: var(--text); color: #fff; border-color: var(--text); }
+    .badge-medium { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+    .iso-flag { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text); letter-spacing: 1px; border: 1px solid var(--border2); padding: 2px 7px; border-radius: 3px; background: var(--surface2); }
+
+    .room-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 18px; }
+    .room-tile { border: 1px solid var(--border); border-radius: 7px; padding: 14px 10px; text-align: center; transition: all 0.15s; cursor: pointer; background: var(--surface); position: relative; }
+    .room-tile:hover { border-color: var(--border2); background: var(--surface2); }
+    .room-tile.occupied { background: var(--text); border-color: var(--text); }
+    .room-tile.isolation { background: var(--surface2); border-color: var(--border2); border-style: dashed; }
+    .room-number { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+    .room-tile.occupied .room-number { color: #fff; }
+    .room-status { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); }
+    .room-tile.occupied .room-status { color: rgba(255,255,255,0.45); }
+    .iso-label { position: absolute; top: 5px; right: 5px; font-size: 8px; font-family: 'DM Mono', monospace; color: var(--muted); }
+
+    .form-body { padding: 22px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 12px; outline: none; transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--text); }
+    .btn-submit { width: 100%; padding: 11px; background: var(--text); color: #fff; border: none; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; margin-top: 4px; }
+    .btn-submit:hover { opacity: 0.8; }
+
+    .alerts-list { padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; }
+    .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); }
+    .alert-item.alert-high { background: var(--text); border-color: var(--text); color: #fff; }
+    .alert-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; background: var(--border2); }
+    .alert-high .alert-dot { background: rgba(255,255,255,0.5); }
+    .alert-text { flex: 1; line-height: 1.4; font-size: 12px; }
+    .alert-high .alert-text { color: rgba(255,255,255,0.9); }
+    .alert-time { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--faint); white-space: nowrap; margin-top: 2px; }
+    .alert-high .alert-time { color: rgba(255,255,255,0.4); }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,25,23,0.45); z-index: 50; align-items: center; justify-content: center; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 480px; max-width: 90vw; }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); border-radius: 7px; padding: 13px 20px; font-size: 12px; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: 0.5px; z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.25s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>SOSPITAS</h1>
+      <p>HOSPITAL MANAGEMENT</p>
+    </div>
+    <nav>
+      <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item"><span class="nav-icon">◈</span> Patients</div>
+      <div class="nav-item"><span class="nav-icon">◫</span> Rooms</div>
+      <div class="nav-item"><span class="nav-icon">⚑</span> Alerts</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div><span class="status-dot"></span>SYSTEM ONLINE</div>
+      <div style="margin-top:5px" id="user-name"></div>
+      <div style="margin-top:8px"><span onclick="logout()" style="cursor:pointer;opacity:0.6">→ Sign Out</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">HOSPITAL ROOM &amp; PATIENT MANAGEMENT</div>
+      </div>
+      <div>
+        <div class="time-display" id="clock">--:--:--</div>
+        <div class="time-date" id="datedisp"></div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-sub">Currently admitted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Isolation Needed</div>
+        <div class="stat-value" id="stat-isolation">0</div>
+        <div class="stat-sub">High-priority cases</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Rooms Available</div>
+        <div class="stat-value" id="stat-available">0</div>
+        <div class="stat-sub">Ready for assignment</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">High Risk</div>
+        <div class="stat-value" id="stat-high">0</div>
+        <div class="stat-sub">Immediate attention</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel full">
+        <div class="panel-header">
+          <span class="panel-title">Patient Registry</span>
+          <span class="panel-action" onclick="document.getElementById('addModal').style.display='flex'">+ Add Patient</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Age</th><th>Symptoms</th><th>Risk</th><th>Isolation</th><th>Room</th></tr>
+          </thead>
+          <tbody id="patient-table-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--faint);font-family:'DM Mono',monospace;font-size:11px;padding:32px;letter-spacing:1px">LOADING...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Room Status</span>
+          <span class="panel-action" onclick="addRoom()">+ Add Room</span>
+        </div>
+        <div class="room-grid" id="room-grid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Priority Alerts</span>
+        </div>
+        <div class="alerts-list" id="alerts-list"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="panel-header" style="border-radius:12px 12px 0 0">
+        <span class="panel-title">Register New Patient</span>
+        <span class="panel-action" onclick="document.getElementById('addModal').style.display='none'">✕ Close</span>
+      </div>
+      <div class="form-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="p-name" placeholder="e.g. Jane Smith"/>
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" id="p-age" placeholder="e.g. 45" min="0" max="120"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Infection Risk</label>
+            <select id="p-risk">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Symptoms (comma-separated)</label>
+            <input type="text" id="p-symptoms" placeholder="e.g. fever, cough"/>
+          </div>
+        </div>
+        <button class="btn-submit" onclick="addPatient()">Register Patient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── AUTH ──
+    const token = localStorage.getItem('token');
+    const user  = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!token) window.location.href = '/login.html';
+    if (user) document.getElementById('user-name').textContent = user.name;
+
+    async function authFetch(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      if (res.status === 401) {
+        localStorage.clear();
+        window.location.href = '/login.html';
+      }
+      return res;
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login.html';
+    }
+
+    // ── STATE ──
+    const state = { patients: [], rooms: [] };
+
+    // ── CLOCK ──
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB');
+      document.getElementById('datedisp').textContent = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ── LOAD DATA ──
+    async function loadData() {
+      try {
+        const [pRes, rRes] = await Promise.all([
+          authFetch('/api/patients'),
+          authFetch('/api/rooms')
+        ]);
+        state.patients = await pRes.json();
+        state.rooms    = await rRes.json();
+        render();
+      } catch (err) {
+        showToast('Failed to load data');
+      }
+    }
+
+    // ── ADD PATIENT ──
+    async function addPatient() {
+      const name     = document.getElementById('p-name').value.trim();
+      const age      = parseInt(document.getElementById('p-age').value);
+      const risk     = document.getElementById('p-risk').value;
+      const symptoms = document.getElementById('p-symptoms').value
+                        .split(',').map(s => s.trim()).filter(Boolean);
+      if (!name || !age) return showToast('Please fill in all required fields');
+
+      const res  = await authFetch('/api/patients', {
+        method: 'POST',
+        body: JSON.stringify({ name, age, infectionRisk: risk, symptoms })
+      });
+      const data = await res.json();
+      if (!res.ok) return showToast(data.error || 'Failed to save patient');
+
+      document.getElementById('addModal').style.display = 'none';
+      ['p-name','p-age','p-symptoms'].forEach(id => document.getElementById(id).value = '');
+      showToast('Patient registered: ' + name);
+      await loadData();
+    }
+
+    // ── ADD ROOM ──
+    async function addRoom() {
+      const num = prompt('Room number:');
+      if (!num) return;
+      const iso = confirm('Isolation room?');
+      const res = await authFetch('/api/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ roomNumber: num, isIsolation: iso })
+      });
+      if (res.ok) { showToast('Room added'); await loadData(); }
+      else showToast('Failed to add room');
+    }
+
+    // ── ASSIGN ROOM ──
+    async function assignRoom(patientId) {
+      const res  = await authFetch(`/api/patients/${patientId}/assign-room`, {
+        method: 'PUT',
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (!res.ok) return showToast(data.error || 'Could not assign room');
+      showToast('Room assigned');
+      await loadData();
+    }
+
+    // ── DISCHARGE PATIENT ──
+    async function dischargePatient(roomId) {
+      if (!confirm('Discharge patient from this room?')) return;
+      const res = await authFetch(`/api/rooms/${roomId}/discharge`, { method: 'DELETE' });
+      if (res.ok) { showToast('Patient discharged'); await loadData(); }
+      else showToast('Failed to discharge patient');
+    }
+
+    // ── RENDER ──
+    function render() {
+      document.getElementById('stat-total').textContent     = state.patients.length;
+      document.getElementById('stat-isolation').textContent = state.patients.filter(p => p.isolationNeeded).length;
+      document.getElementById('stat-available').textContent = state.rooms.filter(r => !r.isOccupied).length;
+      document.getElementById('stat-high').textContent      = state.patients.filter(p => p.infectionRisk === 'high').length;
+
+      // ── Patient table ──
+      const tbody = document.getElementById('patient-table-body');
+      tbody.innerHTML = state.patients.length
+        ? state.patients.map(p => {
+            const room = state.rooms.find(r => r._id === p.roomId);
+            const roomCell = room
+              ? `<span style="font-family:'DM Mono',monospace;font-size:12px">
+                   Room ${room.roomNumber}
+                   <span class="panel-action" style="font-size:10px;padding:3px 8px;margin-left:8px"
+                     onclick="dischargePatient('${room._id}')">Discharge</span>
+                 </span>`
+              : `<span class="panel-action" style="font-size:10px;padding:4px 10px"
+                   onclick="assignRoom('${p._id}')">Assign</span>`;
+            return `<tr>
+              <td style="font-weight:500">${p.name}</td>
+              <td style="color:var(--muted)">${p.age}</td>
+              <td style="font-size:12px;color:var(--muted)">${p.symptoms.join(', ') || '—'}</td>
+              <td><span class="badge badge-${p.infectionRisk}">${p.infectionRisk}</span></td>
+              <td>${p.isolationNeeded ? '<span class="iso-flag">⚑ Required</span>' : '<span style="color:var(--faint)">—</span>'}</td>
+              <td>${roomCell}</td>
+            </tr>`;
+          }).join('')
+        : '<tr><td colspan="6" style="text-align:center;color:var(--faint);font-family:\'DM Mono\',monospace;font-size:11px;padding:32px;letter-spacing:1px">NO PATIENTS REGISTERED</td></tr>';
+
+      // ── Room grid ──
+      document.getElementById('room-grid').innerHTML = state.rooms.length
+        ? state.rooms.map(r => `
+            <div class="room-tile ${r.isOccupied ? 'occupied' : r.isIsolation ? 'isolation' : ''}">
+              ${r.isIsolation ? '<span class="iso-label">ISO</span>' : ''}
+              <div class="room-number">${r.roomNumber}</div>
+              <div class="room-status">${r.isOccupied ? 'Occupied' : 'Available'}</div>
+            </div>`).join('')
+        : '<div style="grid-column:1/-1;text-align:center;color:var(--faint);font-family:\'DM Mono\',monospace;font-size:11px;padding:20px;letter-spacing:1px">NO ROOMS CONFIGURED</div>';
+
+      // ── Alerts ──
+      const alerts = [];
+      state.patients.forEach(p => {
+        if (p.infectionRisk === 'high' && !p.roomId)
+          alerts.push({ level:'high', text:`${p.name} — high risk, no room assigned`, time:'Now' });
+        else if (p.isolationNeeded && !p.roomId)
+          alerts.push({ level:'medium', text:`${p.name} — isolation required, pending`, time:'Pending' });
+      });
+      if (!state.rooms.some(r => r.isIsolation && !r.isOccupied) && state.patients.some(p => p.isolationNeeded && !p.roomId))
+        alerts.push({ level:'high', text:'No isolation rooms available — immediate action needed', time:'Urgent' });
+
+      document.getElementById('alerts-list').innerHTML = alerts.length
+        ? alerts.map(a => `<div class="alert-item alert-${a.level}"><div class="alert-dot"></div><div class="alert-text">${a.text}</div><div class="alert-time">${a.time}</div></div>`).join('')
+        : '<div style="text-align:center;color:var(--faint);font-family:\'DM Mono\',monospace;font-size:11px;padding:20px;letter-spacing:1px">NO ACTIVE ALERTS</div>';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ── INIT ──
+    loadData();
+  </script>
+</body>
+</html>
+
