@@ -17,3 +17,6 @@ steps:
 
 images:
   - 'europe-west2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sospitas'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
