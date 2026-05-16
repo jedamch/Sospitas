@@ -3,6 +3,7 @@ const router = express.Router();
 const Patient = require('../models/Patient');
 const Room = require('../models/Room');
 
+
 // Helper: calculate isolation priority
 function needsIsolation(patient) {
   if (patient.infectionRisk === 'high') return true;
@@ -28,25 +29,31 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT assign patient to a room
 router.put('/:id/assign-room', async (req, res) => {
-  const { roomId } = req.body;
-  const patient = await Patient.findById(req.params.id);
-  const room = await Room.findById(roomId);
+  try {
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
-  if (!room || room.isOccupied)
-    return res.status(400).json({ error: 'Room unavailable' });
+    // Find any available room
+    const query = { isOccupied: false };
+    if (patient.isolationNeeded) query.isIsolation = true;
 
-  if (patient.isolationNeeded && !room.isIsolation)
-    return res.status(400).json({ error: 'Patient needs an isolation room' });
+    const room = await Room.findOne(query);
+    console.log('Looking for room with query:', query);
+    console.log('Found room:', room);
 
-  patient.roomId = room._id;
-  room.isOccupied = true;
-  room.patientId = patient._id;
+    if (!room) return res.status(400).json({ error: 'No suitable rooms available' });
 
-  await patient.save();
-  await room.save();
-  res.json({ patient, room });
+    patient.roomId = room._id;
+    room.isOccupied = true;
+    room.patientId  = patient._id;
+
+    await patient.save();
+    await room.save();
+    res.json({ patient, room });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // DELETE /api/patients/:id
