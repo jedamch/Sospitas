@@ -49,4 +49,22 @@ router.put('/:id/assign-room', async (req, res) => {
   res.json({ patient, room });
 });
 
+// DELETE /api/patients/:id
+router.delete('/:id', async (req, res) => {
+  try {
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ error: 'Patient not found' });
+
+    // Free up their room if assigned
+    if (patient.roomId) {
+      await Room.findByIdAndUpdate(patient.roomId, { isOccupied: false, patientId: null });
+    }
+
+    await Patient.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Patient deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
