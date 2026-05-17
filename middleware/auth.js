@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-// Verify token on protected routes
+// Verifying the protected token
 function protect(req, res, next) {
   const authHeader = req.headers.authorization;
 
@@ -19,7 +19,7 @@ function protect(req, res, next) {
   }
 }
 
-// Restrict to admin only
+// Making sure only admins can access
 function adminOnly(req, res, next) {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Admin access required' });
